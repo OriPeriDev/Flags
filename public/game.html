@@ -104,6 +104,7 @@
     });
 
     socket.on('quiz', function (countryInfo) {
+      
       round++;
       document.getElementById("message").innerText = "";
       document.getElementById("yourStatus").innerText = "Choosing answer...";
@@ -130,6 +131,7 @@
         // Add an onclick event handler
         button.addEventListener('click', handleClick);
       }
+      interact = true;
       countDownFrom(10, round);
 
     });
@@ -154,6 +156,7 @@
     });
 
     socket.on('rightAnswer', function (answer) {
+      interact = false;
       const buttons = document.querySelectorAll('button');
 
       for (let button of buttons) {
