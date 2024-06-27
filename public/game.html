@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Multiplayer Game</title>
 </head>
 
@@ -53,14 +54,12 @@
 
 
 
-    window.onbeforeunload = function () {
-      // if (deleteStorage) {
-      //   localStorage.clear()
-      // }
-      localStorage.setItem("name", name)
-      localStorage.setItem("pfp", pfp)
-      socket.emit('gameDisconnect');
-    };
+    window.addEventListener('pagehide', function() {
+    // Save data to localStorage or perform other cleanup
+    localStorage.setItem("name", name);
+    localStorage.setItem("pfp", pfp);
+    socket.emit('gameDisconnect');
+});
 
     socket.on('connect', function () {
       socket.emit('find', {name,pfp});
