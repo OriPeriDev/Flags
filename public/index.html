@@ -10,7 +10,7 @@
   <h1>Flags Game</h1>
   <div class="container">
     <div class="profile-pic-container">
-    <img id="image" class="profile-pic">
+    <img id="image" class="profile-pic" onclick="choose()">
     <button class="regenerate-btn" onclick="setFlag()">&#x21bb;</button>
   </div>
     <input type="text" id="name" placeholder="Enter Your Nickname">
@@ -20,7 +20,18 @@
   <link rel="stylesheet" type="text/css" href="index.css">
   <script>
     var countryCode=null;
-    setFlag()
+    if(localStorage.getItem("pfp")!==null&&localStorage.getItem("pfp")!=="null"){
+      var url ='https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/' + localStorage.getItem("pfp") + '.png';
+      document.getElementById("image").src = url;
+      countryCode= localStorage.getItem("pfp");
+    }else{
+      setFlag()
+    }
+    
+    function choose(){
+      window.location.href = 'pfp.html';
+    }
+
     function connect() {
       var nameInput = document.getElementById("name").value;
       
@@ -31,16 +42,17 @@
         document.getElementById("message").innerHTML = "The name has to be shorter than 15 characters.";
       } else {
         localStorage.setItem("name", nameInput);
-        localStorage.setItem("pfp", countryCode)
+        localStorage.setItem("pfp", countryCode);
         window.location.href = 'game.html';
         
       }
     }
     async function setFlag() {
-      while(!imageExists(url)){
+      // while(!imageExists(url)){
         countryCode = await getRandomCountry();
         var url ='https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/' + countryCode + '.png';
-      }
+      // }
+      localStorage.setItem("pfp", countryCode)
       document.getElementById("image").src = url;
       
     }

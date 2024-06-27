@@ -48,8 +48,10 @@ button:hover {
   height: 200px; /* Increased size */
   border: 2px solid #ddd;
   border-radius: 20%;
-  
+  cursor: pointer;
 }
+
+
 
 
 .regenerate-btn {
