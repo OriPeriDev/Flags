@@ -1,0 +1,132 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-size: 2em; /* Increased size */
+}
+
+h2 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-size: 2em; /* Increased size */
+}
+
+#code {
+    font-size: 2em; /* Increased size */
+}
+/* 
+#yourName,
+#opponentName {
+    font-size: 1.5em;
+} */
+
+#countDown {
+    font-size: 3em; /* Increased size */
+    font-weight: bold;
+}
+
+#message {
+    margin-top: 20px;
+    font-size: 2em; /* Increased size */
+    font-style: italic;
+}
+
+button {
+    margin-top: 10px;
+    padding: 15px 30px; /* Increased padding */
+    font-size: 1.2em; /* Increased size */
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button.b {
+    width: 250px; /* Increased width */
+}
+
+button.b:hover {
+    background-color: rgb(16, 194, 16);
+}
+
+button#again {
+    margin-top: 20px;
+    background-color: #f44336;
+    /* Red */
+}
+
+button#again:hover {
+    background-color: #d32f2f;
+    /* Darker red */
+}
+
+img#countryImage {
+    margin-top: 20px;
+    width: 200px; /* Increased size */
+    height: auto;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+}
+
+.container {
+    display: flex;
+    justify-content: center; /* Center the container */
+    width: 60%; /* Adjust width to move closer to the center */
+    margin-bottom: 20px;
+}
+
+.player,
+.opponent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0 200px; /* Adjust margin to move closer to the center */
+}
+
+.profile-pic {
+    width: 70px; /* Increased size */
+    height: 70px; /* Increased size */
+    margin-right: 20px; /* Adjust spacing for the player */
+    margin-left: 20px; /* Adjust spacing for the opponent */
+    border: 2px solid #ddd;
+    border-radius: 20%;
+}
+
+#yourStatus,
+#opponentStatus{
+    font-size: 1.2em;
+    font-weight: normal;
+}
+
+.infoYour {
+    text-align: left; /* Align text to the left */
+}
+
+.infoOpponent {
+    text-align: right; /* Align text to the left */
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    button {
+        width: 80%;
+    }
+
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .player,
+    .opponent {
+        margin-bottom: 20px;
+    }
+}

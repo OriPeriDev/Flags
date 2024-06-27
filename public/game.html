@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Multiplayer Game</title>
+</head>
+
+<body>
+  <h1 id="code"></h1>
+  <div class="container">
+    <div class="player">
+      <img id="yourImage" src="globe.png" class="profile-pic" style="display:none;">
+      <div class="infoYour">
+        <h2 id="yourName"></h2>
+        <h2 id="yourStatus"></h2>
+      </div>
+    </div>
+    <div class="opponent">
+      <div class="infoOpponent">
+        <h2 id="opponentName"></h2>
+        <h2 id="opponentStatus"></h2>
+      </div>
+      <img id="opponentImage" src="globe.png" class="profile-pic" style="display:none;">
+    </div>
+  </div>
+  <h2 id="countDown"></h2>
+  <img id="countryImage">
+  <button id="button0" class="b" style="display:none;"></button>
+  <button id="button1" class="b" style="display:none;"></button>
+  <button id="button2" class="b" style="display:none;"></button>
+  <button id="button3" class="b" style="display:none;"></button>
+  <h2 id="message">Searching for an opponent...</h2>
+  <button onclick="again()" id="again" style="display:none;">Play Again</button>
+  <link rel="stylesheet" type="text/css" href="game.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    if (localStorage.getItem("name") === null) {
+      window.location.href = 'index.html';
+    }
+    var socket = io();
+    var name = localStorage.getItem("name")
+    var pfp = localStorage.getItem("pfp")
+    localStorage.clear()
+    var deleteStorage = true;
+    var interact = true;
+
+    function again() {
+      deleteStorage = false;
+      window.location.href = 'game.html';
+    }
+
+
+
+
+
+    window.onbeforeunload = function () {
+      // if (deleteStorage) {
+      //   localStorage.clear()
+      // }
+      localStorage.setItem("name", name)
+      localStorage.setItem("pfp", pfp)
+      socket.emit('gameDisconnect');
+    };
+
+    socket.on('connect', function () {
+      socket.emit('find', {name,pfp});
+    });
+
+    socket.on('winlose', function (wl) {
+      interact = false;
+      if (wl === 'dis') {
+        document.getElementById("message").innerText = "Your opponent has disconnected. You won!";
+      }
+      else if (wl === 'w') {
+        document.getElementById("message").innerText = "You won!";
+      }
+      else if (wl === 'l') {
+        document.getElementById("message").innerText = "You lost.";
+      }
+      document.getElementById("again").style = "display:block;"
+    });
+
+    socket.on('roomAssignedCode', function (code) {
+      // localStorage.setItem("code", code)
+      document.getElementById("code").innerHTML = "Room Code: " + code;
+
+    });
+
+    socket.on('start', function (op) {
+      document.getElementById("message").innerText = "";
+      document.getElementById("yourName").innerHTML = name;
+      document.getElementById("opponentName").innerHTML = op.name;
+      document.getElementById("yourImage").style.display = 'block';
+      document.getElementById("opponentImage").style.display = 'block';
+      if(pfp!==null){
+        document.getElementById("yourImage").src = 'https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/'+pfp+'.png';
+      }
+      if(op.pfp!==null){
+        document.getElementById("opponentImage").src = 'https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/'+op.pfp+'.png';
+      }
+      
+      countThree();
+    });
+
+    socket.on('quiz', function (countryInfo) {
+      document.getElementById("message").innerText = "";
+      document.getElementById("yourStatus").innerText = "Choosing answer...";
+      document.getElementById("yourStatus").style.color = "black";
+      document.getElementById("opponentStatus").innerText = "Choosing answer...";
+      document.getElementById("opponentStatus").style.color = "black";
+      const { countryCode, countryNames } = countryInfo;
+
+      var imgElement = document.getElementById('countryImage');
+      imgElement.src = 'https://flagcdn.com/w160/' + countryCode + '.png';
+
+      for (let i = 0; i < 4; i++) {
+        const old_button = document.getElementById('button' + i);
+        const button = old_button.cloneNode(true);
+        old_button.parentNode.replaceChild(button, old_button);
+        button.style.display = "block";
+        button.textContent = countryNames[i];
+
+        // Define the onclick function
+        const handleClick = function () {
+          answer(countryNames[i])
+        };
+        // Add an onclick event handler
+        button.addEventListener('click', handleClick);
+
+
+      }
+
+      document.getElementById("country").innerText = countryCode;
+      
+    });
+
+    socket.on('colors', function (message) {
+      var who = message[0]
+      var color = message[1]
+      if (who === 0) {
+        var element = document.getElementById("yourStatus")
+      } else {
+        var element = document.getElementById("opponentStatus")
+      }
+      if (color === 0) {
+        col = "red"
+        rightWrong="Wrong answer"
+      } else {
+        col = "green"
+        rightWrong="Got it!"
+      }
+      element.innerHTML=rightWrong
+      element.style.color = col;
+    });
+
+
+    function answer(country) {
+      if (interact) {
+        socket.emit("countryClicked", country)
+        document.getElementById("message").innerText = "Waiting for opponent to answer...";
+      }
+    }
+
+    function countThree() {
+      document.getElementById("countDown").innerHTML = 3;
+      setTimeout(function () {
+        document.getElementById("countDown").innerHTML = 2;
+        setTimeout(function () {
+          document.getElementById("countDown").innerHTML = 1;
+          setTimeout(function () {
+            document.getElementById("countDown").innerHTML = "";
+            socket.emit("flag")
+          }, 1000);
+        }, 1000);
+      }, 1000);
+    }
+
+    // function next(){
+    //   socket.emit('countryClicked');
+    //   document.getElementById("next").style="display:none;"
+    //   document.getElementById("message").innerText = "Waiting for opponent to click...";
+    // }
+
+  </script>
+</body>
+
+</html>

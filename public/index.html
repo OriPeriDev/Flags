@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Multiplayer Game</title>
+</head>
+
+<body>
+  <h1>Flags Game</h1>
+  <div class="container">
+    <div class="profile-pic-container">
+    <img id="image" class="profile-pic">
+    <button class="regenerate-btn" onclick="setFlag()">&#x21bb;</button>
+  </div>
+    <input type="text" id="name" placeholder="Enter Your Nickname">
+    <button onclick="connect()">Connect</button>
+  </div>
+  <h3 id="message"></h3>
+  <link rel="stylesheet" type="text/css" href="index.css">
+  <script>
+    var countryCode=null;
+    setFlag()
+    function connect() {
+      var nameInput = document.getElementById("name").value;
+      
+      // Check if nameInput is not empty
+      if (nameInput === "") {
+        document.getElementById("message").innerHTML = "Please enter a name";
+      } else if (nameInput.length>14) {
+        document.getElementById("message").innerHTML = "The name has to be shorter than 15 characters.";
+      } else {
+        localStorage.setItem("name", nameInput);
+        localStorage.setItem("pfp", countryCode)
+        window.location.href = 'game.html';
+        
+      }
+    }
+    async function setFlag() {
+      while(!imageExists(url)){
+        countryCode = await getRandomCountry();
+        var url ='https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/' + countryCode + '.png';
+      }
+      document.getElementById("image").src = url;
+      
+    }
+    function imageExists(image_url) {
+
+      var http = new XMLHttpRequest();
+
+      http.open('HEAD', image_url, false);
+      http.send();
+
+      return http.status != 404;
+
+    }
+    async function getRandomCountry() {
+      const url = 'https://flagcdn.com/en/codes.json';
+
+      try {
+        // Fetch JSON data
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const entries = Object.entries(data).filter(([code, name]) => {
+          return !code.startsWith('us-'); // Exclude US states
+          
+        });
+
+        // Generate random index
+        const randomIndex = Math.floor(Math.random() * entries.length);
+
+        // Get random entry [countryCode, countryName]
+        const [countryCode, countryName] = entries[randomIndex];
+        return countryCode;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        return null;
+      }
+    }
+  </script>
+</body>
+
+</html>
