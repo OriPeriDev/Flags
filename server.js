@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
   socket.on('find', (data) => {
     let room = rooms.find(room => room.number < 2);
     if (room === undefined) {
-      room = { code: generateRoomCode(), number: 1, users: [socket.id], names:[data.name], pfp:[data.pfp], answers: [null, null], answer: null };
+      room = { code: generateRoomCode(), number: 1, users: [socket.id], names: [data.name], pfp: [data.pfp], answers: [null, null], answer: null, timeoutId: undefined };
       rooms.push(room);
     } else {
       room.number = 2;
@@ -37,11 +37,11 @@ io.on('connection', (socket) => {
       room.names.push(data.name);
       room.pfp.push(data.pfp);
 
-      op =1
+      op = 1
       room.users.forEach(user => {
-        
-        io.to(user).emit('start', {name: room.names[op], pfp:room.pfp[op]});
-        op=0;
+
+        io.to(user).emit('start', { name: room.names[op], pfp: room.pfp[op] });
+        op = 0;
       });
     }
     socket.join(room.code);
@@ -52,22 +52,7 @@ io.on('connection', (socket) => {
   socket.on('flag', async () => {
     let room = rooms.find(room => room.users.includes(socket.id));
     if (room && room.users[0] === socket.id) {  // Only the host emits the 'flag' event
-      
-      const countryData = await getRandomCountry();
-
-      const { countryCode, countryName, additionalCountries } = countryData;
-      room.answer = countryName;
-      // Create an array with countryName and additionalCountries
-      const allCountries = [countryName, ...additionalCountries];
-
-      // Shuffle the array (Fisher-Yates shuffle algorithm)
-      for (let i = allCountries.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allCountries[i], allCountries[j]] = [allCountries[j], allCountries[i]];
-      }
-      room.users.forEach(user => {
-        io.to(user).emit('quiz', { countryCode, countryNames: allCountries });
-      });
+      sendQuiz(room)
     }
   });
 
@@ -81,13 +66,13 @@ io.on('connection', (socket) => {
       }
       if (room.answers[me] === null) {
         room.answers[me] = answer;
-        var op = (me-1)*-1;
-        if(room.answers[me]===room.answer){
+        var op = (me - 1) * -1;
+        if (room.answers[me] === room.answer) {
           io.to(room.users[me]).emit('colors', [0, 1]); // 0: you, 1: right green
-          io.to(room.users[op]).emit('colors', [1,1]); // 1: else, 1: right green
-        } else{
+          io.to(room.users[op]).emit('colors', [1, 1]); // 1: else, 1: right green
+        } else {
           io.to(room.users[me]).emit('colors', [0, 0]); // 0: you, 0: wrong red
-          io.to(room.users[op]).emit('colors', [1,0]); // 1: else, 0: wrong red
+          io.to(room.users[op]).emit('colors', [1, 0]); // 1: else, 0: wrong red
         }
         // if(room.answers[0]===room.answer){
         //   io.to(room.users[0]).emit('colors', [0, 1]); // 0: you, 1: right green
@@ -105,35 +90,26 @@ io.on('connection', (socket) => {
         // }
       }
       if (room.answers[0] !== null && room.answers[1] !== null) { // Both users have clicked
+        clearTimeout(room.timeoutId);
+        
         if (room.answers[0] === room.answer && room.answers[1] !== room.answer) {
           io.to(room.users[0]).emit('winlose', 'w');
           io.to(room.users[1]).emit('winlose', 'l');
+          room.users.forEach(user => {
+            io.to(user).emit('rightAnswer', room.answer);
+          });
           rooms = rooms.filter(r => r.code !== room.code);
         } else if (room.answers[0] !== room.answer && room.answers[1] === room.answer) {
           io.to(room.users[0]).emit('winlose', 'l');
           io.to(room.users[1]).emit('winlose', 'w');
+          room.users.forEach(user => {
+            io.to(user).emit('rightAnswer', room.answer);
+          });
           rooms = rooms.filter(r => r.code !== room.code);
         } else {
-          room.answers = [null, null]; // Reset answers
-          const countryData = await getRandomCountry();
-
-          const { countryCode, countryName, additionalCountries } = countryData;
-          room.answer = countryName;
-          // Create an array with countryName and additionalCountries
-          const allCountries = [countryName, ...additionalCountries];
-
-          // Shuffle the array (Fisher-Yates shuffle algorithm)
-          for (let i = allCountries.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allCountries[i], allCountries[j]] = [allCountries[j], allCountries[i]];
-          }
-          setTimeout(function () {
-            room.users.forEach(user => {
-              io.to(user).emit('quiz', { countryCode, countryNames: allCountries });
-            });
-          }, 460);
-          
+          sendQuiz(room)
         }
+        
       }
     }
   });
@@ -141,6 +117,65 @@ io.on('connection', (socket) => {
 });
 
 var rooms = []
+
+async function sendQuiz(room) {
+  
+  room.users.forEach(user => {
+    io.to(user).emit('rightAnswer', room.answer);
+  });
+  room.answers = [null, null]; // Reset answers
+  const countryData = await getRandomCountry();
+
+  const { countryCode, countryName, additionalCountries } = countryData;
+  room.answer = countryName;
+  // Create an array with countryName and additionalCountries
+  const allCountries = [countryName, ...additionalCountries];
+
+  // Shuffle the array (Fisher-Yates shuffle algorithm)
+  for (let i = allCountries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allCountries[i], allCountries[j]] = [allCountries[j], allCountries[i]];
+  }
+  setTimeout(function () {
+    room.users.forEach(user => {
+      io.to(user).emit('quiz', { countryCode, countryNames: allCountries });
+      
+      
+    });
+  }, 890);
+  // Set a new timeout
+  room.timeoutId = setTimeout(function () {
+    if (room.answers[0] === null && room.answers[1] === null) {
+      room.users.forEach(user => {
+        io.to(user).emit('rightAnswer', room.answer);
+      });
+      room.users.forEach(user => {
+        io.to(user).emit('winlose', "idle");
+      });
+      rooms = rooms.filter(r => r.code !== room.code);
+    } else if (room.answers[0] === null && room.answers[1] === room.answer) {
+      room.users.forEach(user => {
+        io.to(user).emit('rightAnswer', room.answer);
+      });
+      io.to(room.users[0]).emit('winlose', 'l');
+      io.to(room.users[1]).emit('winlose', 'w');
+      rooms = rooms.filter(r => r.code !== room.code);
+    } else if (room.answers[1] === null && room.answers[0] === room.answer) {
+      room.users.forEach(user => {
+        io.to(user).emit('rightAnswer', room.answer);
+      });
+      io.to(room.users[0]).emit('winlose', 'w');
+      io.to(room.users[1]).emit('winlose', 'l');
+      rooms = rooms.filter(r => r.code !== room.code);
+    } else {
+      sendQuiz(room)
+    }
+    
+  }, 10000);
+
+
+
+}
 
 async function getRandomCountry() {
   const url = 'https://flagcdn.com/en/codes.json';

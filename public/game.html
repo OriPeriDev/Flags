@@ -44,28 +44,27 @@
     localStorage.clear()
     var deleteStorage = true;
     var interact = true;
+    var round = 0;
 
     function again() {
       deleteStorage = false;
       window.location.href = 'game.html';
     }
 
-
-
-
-
-    window.addEventListener('pagehide', function() {
-    // Save data to localStorage or perform other cleanup
-    localStorage.setItem("name", name);
-    localStorage.setItem("pfp", pfp);
-    socket.emit('gameDisconnect');
-});
+    window.addEventListener('pagehide', function () {
+      // Save data to localStorage or perform other cleanup
+      localStorage.setItem("name", name);
+      localStorage.setItem("pfp", pfp);
+      socket.emit('gameDisconnect');
+    });
 
     socket.on('connect', function () {
-      socket.emit('find', {name,pfp});
+      socket.emit('find', { name, pfp });
     });
 
     socket.on('winlose', function (wl) {
+      round++;
+      document.getElementById("countDown").innerHTML = "";
       interact = false;
       if (wl === 'dis') {
         document.getElementById("message").innerText = "Your opponent has disconnected. You won!";
@@ -75,6 +74,9 @@
       }
       else if (wl === 'l') {
         document.getElementById("message").innerText = "You lost.";
+      }
+      else if (wl === 'idle') {
+        document.getElementById("message").innerText = "Both lost for idling";
       }
       document.getElementById("again").style = "display:block;"
     });
@@ -91,17 +93,18 @@
       document.getElementById("opponentName").innerHTML = op.name;
       document.getElementById("yourImage").style.display = 'block';
       document.getElementById("opponentImage").style.display = 'block';
-      if(pfp!==null){
-        document.getElementById("yourImage").src = 'https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/'+pfp+'.png';
+      if (pfp !== null) {
+        document.getElementById("yourImage").src = 'https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/' + pfp + '.png';
       }
-      if(op.pfp!==null){
-        document.getElementById("opponentImage").src = 'https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/'+op.pfp+'.png';
+      if (op.pfp !== null) {
+        document.getElementById("opponentImage").src = 'https://raw.githubusercontent.com/swantzter/square-flags/master/png/1x1/256/' + op.pfp + '.png';
       }
-      
+
       countThree();
     });
 
     socket.on('quiz', function (countryInfo) {
+      round++;
       document.getElementById("message").innerText = "";
       document.getElementById("yourStatus").innerText = "Choosing answer...";
       document.getElementById("yourStatus").style.color = "black";
@@ -117,6 +120,7 @@
         const button = old_button.cloneNode(true);
         old_button.parentNode.replaceChild(button, old_button);
         button.style.display = "block";
+        button.style="background-color: #4caf50;";
         button.textContent = countryNames[i];
 
         // Define the onclick function
@@ -125,12 +129,9 @@
         };
         // Add an onclick event handler
         button.addEventListener('click', handleClick);
-
-
       }
+      countDownFrom(10, round);
 
-      document.getElementById("country").innerText = countryCode;
-      
     });
 
     socket.on('colors', function (message) {
@@ -143,20 +144,36 @@
       }
       if (color === 0) {
         col = "red"
-        rightWrong="Wrong answer"
+        rightWrong = "Wrong answer"
       } else {
         col = "green"
-        rightWrong="Got it!"
+        rightWrong = "Got it!"
       }
-      element.innerHTML=rightWrong
+      element.innerHTML = rightWrong
       element.style.color = col;
     });
 
+    socket.on('rightAnswer', function (answer) {
+      const buttons = document.querySelectorAll('button');
+
+      for (let button of buttons) {
+        if (button.textContent === answer) {
+          var b= button;
+        }
+      }
+      if(b){
+        for(var i=0; i<4; i++){
+          currentB=document.getElementById("button"+i);
+          if(currentB!==b){
+            currentB.style="background-color:gray;";
+          }
+        }
+      }
+    });
 
     function answer(country) {
       if (interact) {
         socket.emit("countryClicked", country)
-        document.getElementById("message").innerText = "Waiting for opponent to answer...";
       }
     }
 
@@ -174,11 +191,18 @@
       }, 1000);
     }
 
-    // function next(){
-    //   socket.emit('countryClicked');
-    //   document.getElementById("next").style="display:none;"
-    //   document.getElementById("message").innerText = "Waiting for opponent to click...";
-    // }
+    function countDownFrom(num, cur) {
+      if (num >= 1 && cur === round) {
+        document.getElementById("countDown").innerHTML = num;
+        setTimeout(function () {
+          countDownFrom(num - 1, cur);
+        }, 1000);
+      }
+      // } else {
+      //   document.getElementById("countDown").innerHTML = "";
+      //   // socket.emit("countryClicked", null);
+      // }
+    }
 
   </script>
 </body>
